@@ -95,7 +95,7 @@ DEV_SIMPLE_EXCEPTION(InvalidAccountStartNonceInState);
 DEV_SIMPLE_EXCEPTION(IncorrectAccountStartNonceInState);
 
 class SealEngineFace;
-
+class Executive;
 
 namespace detail
 {
@@ -207,6 +207,8 @@ public:
 	/// This will change the state accordingly.
 	std::pair<ExecutionResult, TransactionReceipt> execute(EnvInfo const& _envInfo, SealEngineFace const& _sealEngine, Transaction const& _t, Permanence _p = Permanence::Committed, OnOpFunc const& _onOp = OnOpFunc());
 
+	/// Execute @a _txCount transactions of a given block.
+	/// This will change the state accordingly.
 	void executeBlockTransactions(Block const& _block, unsigned _txCount, LastHashes const& _lastHashes, SealEngineFace const& _sealEngine);
 
 	/// Check if the address is in use.
@@ -324,6 +326,8 @@ private:
 
 	void createAccount(Address const& _address, Account const&& _account);
 
+	void executeTransaction(Executive& _e, Transaction const& _t, OnOpFunc const& _onOp);
+
 	OverlayDB m_db;								///< Our overlay for the state tree.
 	SecureTrieDB<Address, OverlayDB> m_state;	///< Our state tree, as an OverlayDB DB.
 	mutable std::unordered_map<Address, Account> m_cache;	///< Our address cache. This stores the states of each address that has (or at least might have) been changed.
@@ -338,6 +342,8 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& _out, State const& _s);
+
+State& createIntermediateState(State& o_s, Block const& _block, unsigned _txIndex, BlockChain const& _bc);
 
 template <class DB>
 AddressHash commit(AccountMap const& _cache, SecureTrieDB<Address, DB>& _state)
